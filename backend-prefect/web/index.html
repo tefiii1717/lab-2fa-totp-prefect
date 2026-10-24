@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lab 2FA · Login</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Lab 2FA TOTP</h1>
+      <p class="muted">Step-Up Auth · Strategy · Anti-Replay · Prefect</p>
+    </header>
+
+    <div id="alert" class="alert hidden" role="status"></div>
+
+    <!-- 1. Primer factor -->
+    <section id="view-login" class="card">
+      <h2>Iniciar sesión</h2>
+      <form id="login-form">
+        <label>Usuario <input name="username" autocomplete="username" required minlength="3" /></label>
+        <label>Contraseña <input name="password" type="password" autocomplete="current-password" required minlength="6" /></label>
+        <div class="row">
+          <button type="submit">Entrar</button>
+          <button type="button" id="register-btn" class="secondary">Registrarme</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 2. Segundo factor (Step-Up) -->
+    <section id="view-verify" class="card hidden">
+      <h2>Verificación en dos pasos</h2>
+      <p class="muted">Tienes un <code>pre_auth_token</code> que solo sirve para <code>POST /auth/verify-2fa</code>.</p>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-method="totp">Código de la app</button>
+        <button type="button" class="tab" data-method="backup">Código de respaldo</button>
+      </div>
+      <form id="verify-form">
+        <label id="code-label">Código de 6 dígitos
+          <input name="code" class="code-input" inputmode="numeric" autocomplete="one-time-code" required />
+        </label>
+        <div class="row">
+          <button type="submit">Verificar</button>
+          <button type="button" class="secondary" data-action="logout">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 3. Aprovisionamiento 2FA (PENDING_VERIFICATION -> ACTIVE) -->
+    <section id="view-setup" class="card hidden">
+      <h2>Activa tu 2FA</h2>
+      <p>Estado actual: <span id="setup-status" class="badge"></span></p>
+      <p class="muted">Tu sesión es básica (<code>mfa_verified: false</code>); no puedes entrar a la bóveda hasta activar el segundo factor.</p>
+      <button type="button" id="setup-btn">Generar QR</button>
+
+      <div id="setup-qr" class="hidden">
+        <ol>
+          <li>Escanea el QR con tu app (y con Google/Microsoft Authenticator para la prueba de paridad).</li>
+          <li>O pega la semilla Base32 manualmente en la app.</li>
+          <li>Escribe el primer código para pasar a <strong>ACTIVE</strong>.</li>
+        </ol>
+        <img id="qr-img" alt="Código QR otpauth" width="220" height="220" />
+        <p>Semilla: <code id="secret-text" class="secret"></code> <button type="button" class="link" data-copy="secret-text">copiar</button></p>
+        <details><summary>URI otpauth</summary><code id="uri-text" class="wrap"></code></details>
+        <form id="confirm-form">
+          <label>Primer código de la app <input name="code" class="code-input" inputmode="numeric" maxlength="6" required /></label>
+          <button type="submit">Confirmar y activar</button>
+        </form>
+      </div>
+
+      <div id="setup-done" class="hidden">
+        <p class="ok">2FA en estado <strong>ACTIVE</strong>. Guarda estos códigos de respaldo; no se volverán a mostrar:</p>
+        <ul id="backup-list" class="backup-list"></ul>
+        <button type="button" data-action="logout">Cerrar sesión y entrar con 2FA</button>
+      </div>
+      <p><button type="button" class="link" data-action="logout">Cerrar sesión</button></p>
+    </section>
+
+    <!-- 4. Zona protegida -->
+    <section id="view-vault" class="card hidden">
+      <h2>Bóveda secreta</h2>
+      <pre id="vault-output"></pre>
+      <h3>Claims del access_token</h3>
+      <pre id="claims-output"></pre>
+      <div class="row">
+        <button type="button" id="replay-btn" class="danger">Probar ataque de repetición</button>
+        <button type="button" class="secondary" data-action="logout">Cerrar sesión</button>
+      </div>
+      <p class="muted small">El botón vuelve a hacer login y reenvía el mismo código recién usado. Debe responder 409 y en Prefect verse el flow en rojo en <code>check_anti_replay_cache</code>.</p>
+    </section>
+
+    <footer class="muted small">
+      Prefect UI: <a href="http://127.0.0.1:4200" target="_blank" rel="noopener">127.0.0.1:4200</a> ·
+      API docs: <a href="/docs" target="_blank" rel="noopener">/docs</a>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

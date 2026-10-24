@@ -1,0 +1,9 @@
+fastapi==0.150.0
+uvicorn[standard]==0.54.0
+prefect==3.9.0
+PyJWT==2.15.1
+qrcode[pil]==8.2
+python-dotenv==1.2.4
+supabase==2.33.0
+pytest
+httpx
